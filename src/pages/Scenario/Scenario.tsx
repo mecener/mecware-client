@@ -10,12 +10,13 @@ import { useInput } from "@/hooks/useInput";
 import { type ContentItem, type DialogueLine, type ScenarioAttributes } from "@/services/api.types";
 import type { User } from "@/store/slices/users";
 import { palette } from "@/style/colorPalette";
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useRef, useState, type FC } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { AnimatePresence as AP, motion as m } from "framer-motion";
 import { useAddContributionMutation, useChangeSelectedContributionMutation } from "@/services/api";
 import { useActions } from "@/hooks/useActions";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
 
 const BackLink = styled(Flex)`
 	cursor: pointer;
@@ -91,6 +92,7 @@ const Scenario: FC = () => {
 								userId={myId || 0}
 								scenarioId={scenario.id}
 								dialogueId={line.id}
+								scenario={scenario}
 								key={index}
 								{...line}
 							/>
@@ -143,15 +145,9 @@ const Content = styled(Body.S)`
 	}
 `;
 
-const DialogueItem: FC<DialogueLine & { authorId: number; scenarioId: number; dialogueId: number; userId: number }> = ({
-	authorId,
-	scenarioId,
-	dialogueId,
-	content,
-	character,
-	timestamp,
-	userId,
-}) => {
+const DialogueItem: FC<
+	DialogueLine & { authorId: number; scenarioId: number; dialogueId: number; userId: number; scenario: ScenarioAttributes | null }
+> = ({ authorId, scenarioId, dialogueId, content, character, timestamp, userId, scenario }) => {
 	const parseContent = content
 		.map((contentItem) => {
 			if (typeof contentItem === "string") return contentItem;
@@ -183,6 +179,7 @@ const DialogueItem: FC<DialogueLine & { authorId: number; scenarioId: number; di
 						scenarioId={scenarioId}
 						key={index}
 						data={contentItem}
+						scenario={scenario}
 					/>
 				))}
 			</Content>
@@ -193,7 +190,7 @@ const DialogueItem: FC<DialogueLine & { authorId: number; scenarioId: number; di
 const SForm = styled(Flex).attrs({ as: "form" })``;
 
 const PickItem = styled(Flex)<{ $clickable: boolean }>`
-	padding: 8px;
+	padding: 8px 40px 8px 8px;
 	margin: -8px;
 	border-radius: 8px;
 	transition: 199ms;
@@ -243,7 +240,8 @@ const Item: FC<{
 	dialogueId: number;
 	lineId: number;
 	userId: number;
-}> = ({ authorId, scenarioId, dialogueId, lineId, userId, data }) => {
+	scenario: ScenarioAttributes | null;
+}> = ({ authorId, scenarioId, dialogueId, lineId, userId, data, scenario }) => {
 	const [isTooltipVisible, setIsTooltipVisible] = useState<boolean>(false);
 
 	const value = useInput("", {});
@@ -255,6 +253,16 @@ const Item: FC<{
 	const [triggerAddContribution] = useAddContributionMutation();
 	const [triggerChangeSelectedContribution] = useChangeSelectedContributionMutation();
 
+	const hasContribution = (scenario: ScenarioAttributes | null): boolean => {
+		if (!scenario) return false;
+
+		const line = scenario.content.dialogues
+			.filter((dialogue) => dialogue.id === dialogueId)[0]
+			.content.filter((_, index) => index === lineId)[0];
+
+		return typeof line !== "string" ? line.contributions.some((contribution) => contribution.userId === myId) : false;
+	};
+
 	const handler = async (event: React.SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
@@ -262,7 +270,10 @@ const Item: FC<{
 
 		await triggerAddContribution({ scenarioId, dialogueId, lineId, userId, contributionContent: value.value })
 			.unwrap()
-			.then((response) => console.log(response));
+			.then((response) => {
+				console.log(response);
+				location.reload();
+			});
 	};
 
 	const transitions = {
@@ -271,12 +282,16 @@ const Item: FC<{
 		exit: { opacity: 0, scale: 0.95 },
 	};
 
+	const tooltipRef = useRef<HTMLDivElement>(null);
+
+	useOutsideClick(tooltipRef, () => setIsTooltipVisible(false));
+
 	return (
 		<>
 			{typeof data === "string" ? (
 				<span>{data}</span>
 			) : (
-				<span onClick={() => setIsTooltipVisible((prev) => !prev)} className="contribution">
+				<span ref={tooltipRef} onClick={() => setIsTooltipVisible((prev) => !prev)} className="contribution">
 					{data.selectedOption === "initial" ? data.initial : data.contributions[data.selectedOption].content}
 					<AP mode="wait">
 						{isTooltipVisible && (
@@ -342,16 +357,18 @@ const Item: FC<{
 												</IconContainer>
 											</PickItem>
 										))}
-										<SForm onSubmit={(event) => handler(event)} $gap={8} $alignItems="flex-end">
-											<Input
-												onClick={(event) => event.stopPropagation()}
-												min
-												placeholder="Add contribution"
-												value={value.value}
-												onChange={value.onChange}
-											/>
-											<Button.Primary onClick={(event) => event.stopPropagation()} $icon={<Icon.Scenario />} />
-										</SForm>
+										{!hasContribution(scenario) && (
+											<SForm onSubmit={(event) => handler(event)} $gap={8} $alignItems="flex-end">
+												<Input
+													onClick={(event) => event.stopPropagation()}
+													min
+													placeholder="Add contribution"
+													value={value.value}
+													onChange={value.onChange}
+												/>
+												<Button.Primary onClick={(event) => event.stopPropagation()} $icon={<Icon.Scenario />} />
+											</SForm>
+										)}
 									</Flex>
 								</Tooltip>
 							</m.div>

@@ -4,12 +4,14 @@ import { motion as m } from "framer-motion";
 import { palette } from "@/style/colorPalette";
 import { Body } from "@/components/Primitives/Typography";
 import { Icon } from "@/components/Primitives/Icon";
+import type React from "react";
 
 interface TooltipProps {
 	$side?: "top" | "right" | "bottom" | "left";
 	$contentPlacement?: "start" | "center" | "end";
 	$maxWidth?: string;
 	$style?: "error" | "default";
+	ref?: React.RefObject<HTMLDivElement | null>;
 	onClick?: (event: MouseEvent) => void;
 	children: React.ReactNode;
 }

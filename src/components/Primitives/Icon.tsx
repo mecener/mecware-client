@@ -1,6 +1,6 @@
 
 // Auto-generated file - DO NOT EDIT MANUALLY
-// Generated at: 2026-04-08T19:03:32.739Z
+// Generated at: 2026-04-10T19:00:28.269Z
 
 import type { SVGProps } from "react";
 
