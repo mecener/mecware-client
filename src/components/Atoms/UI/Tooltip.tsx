@@ -10,6 +10,7 @@ interface TooltipProps {
 	$contentPlacement?: "start" | "center" | "end";
 	$maxWidth?: string;
 	$style?: "error" | "default";
+	onClick?: (event: MouseEvent) => void;
 	children: React.ReactNode;
 }
 
@@ -25,7 +26,7 @@ const arrowTransitions = {
 	exit: { opacity: 0, x: 5 },
 };
 
-const StyledTooltip = styled(m.div)<Pick<TooltipProps, "$side" | "$contentPlacement" | "$maxWidth" | "$style">>`
+const StyledTooltip = styled(m.div)<Pick<TooltipProps, "$side" | "$contentPlacement" | "$maxWidth" | "$style" | "onClick">>`
 	position: absolute;
 	z-index: 1;
 	${({ $side, $contentPlacement }) =>
@@ -79,7 +80,7 @@ const getArrowRotate = (side: TooltipProps["$side"]): string => {
 	= Love u, man. Catch tomorrow! 26.03.2026 23:32, bye
 */
 
-const ArrowContainer = styled(m.div)<Pick<TooltipProps, "$side" | "$contentPlacement" | "$style">>`
+const ArrowContainer = styled(m.div)<Pick<TooltipProps, "$side" | "$contentPlacement" | "$style" | "onClick">>`
 	position: absolute;
 	z-index: 0;
 	color: ${({ $style }) => ($style === "error" ? "#211414" : palette.black[600])};

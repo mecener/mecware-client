@@ -1,6 +1,6 @@
 
 // Auto-generated file - DO NOT EDIT MANUALLY
-// Generated at: 2026-04-07T14:20:58.645Z
+// Generated at: 2026-04-08T19:03:32.739Z
 
 import type { SVGProps } from "react";
 
@@ -8,6 +8,7 @@ import ActivityIcon from "@icons/activity.svg?react";
 import AppIcon from "@icons/app.svg?react";
 import ArrowBackIcon from "@icons/arrow-back.svg?react";
 import AtIcon from "@icons/at.svg?react";
+import CheckIcon from "@icons/check.svg?react";
 import CornerIcon from "@icons/corner.svg?react";
 import CreateAccountIcon from "@icons/create-account.svg?react";
 import DiscordIcon from "@icons/discord.svg?react";
@@ -36,6 +37,7 @@ const icons = {
 	App: AppIcon,
 	ArrowBack: ArrowBackIcon,
 	At: AtIcon,
+	Check: CheckIcon,
 	Corner: CornerIcon,
 	CreateAccount: CreateAccountIcon,
 	Discord: DiscordIcon,

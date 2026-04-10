@@ -7,7 +7,7 @@ import { type User as IUser } from "@/store/slices/users";
 export const api = createApi({
 	reducerPath: "api",
 	baseQuery: fetchBaseQuery({
-		baseUrl: "http://api.mecener.online/",
+		baseUrl: "https://api.mecener.online/",
 		credentials: "include",
 		prepareHeaders(headers) {
 			headers.set("Content-Type", "application/json");
