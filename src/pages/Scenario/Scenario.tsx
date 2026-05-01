@@ -17,6 +17,7 @@ import { AnimatePresence as AP, motion as m } from "framer-motion";
 import { useAddContributionMutation, useChangeSelectedContributionMutation } from "@/services/api";
 import { useActions } from "@/hooks/useActions";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const BackLink = styled(Flex)`
 	cursor: pointer;
@@ -70,6 +71,8 @@ const Scenario: FC = () => {
 			}
 		}
 	}, [id, scenarios]);
+
+	useLocalStorage<string>("scrollPos", (data) => setTimeout(() => window.scroll(0, +data), 500));
 
 	return (
 		scenario && (
@@ -126,6 +129,7 @@ const Timestamp = styled(Block)`
 
 const Content = styled(Body.S)`
 	display: inline;
+	color: ${palette.white[500]};
 
 	.contribution {
 		position: relative;
@@ -133,7 +137,7 @@ const Content = styled(Body.S)`
 		display: inline-block;
 		padding: 2px 6px;
 		border-radius: 4px;
-		color: ${palette.primary[500]};
+		color: ${palette.white[100]};
 		box-shadow:
 			inset 0 1px 0 0 ${palette.black[200]},
 			0 1px 0 0 ${palette.black[500]};
@@ -273,6 +277,7 @@ const Item: FC<{
 			.then((response) => {
 				console.log(response);
 				location.reload();
+				localStorage.setItem("scrollPos", `${window.scrollY}`);
 			});
 	};
 
@@ -291,7 +296,11 @@ const Item: FC<{
 			{typeof data === "string" ? (
 				<span>{data}</span>
 			) : (
-				<span ref={tooltipRef} onClick={() => setIsTooltipVisible((prev) => !prev)} className="contribution">
+				<span
+					ref={tooltipRef}
+					onClick={() => setIsTooltipVisible((prev) => !prev)}
+					className={`contribution${data.selectedOption !== "initial" ? " contribution--picked" : ""}`}
+				>
 					{data.selectedOption === "initial" ? data.initial : data.contributions[data.selectedOption].content}
 					<AP mode="wait">
 						{isTooltipVisible && (
@@ -339,7 +348,7 @@ const Item: FC<{
 															dialogueId,
 															lineId,
 															userId,
-															contributionId: "initial",
+															contributionId: index,
 														})
 															.unwrap()
 															.then((response) => {

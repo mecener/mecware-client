@@ -11,6 +11,10 @@ const GlobalStyle = createGlobalStyle`
 		padding: 8px;
 	}
 
+	.contribution--picked {
+		color: ${palette.primary[500]} !important;
+	}
+	
 	.icon {
 		path[fill],circle[fill],rect[fill],line[fill],polygon[fill] {
 			fill: currentColor
