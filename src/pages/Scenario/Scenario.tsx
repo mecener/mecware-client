@@ -91,6 +91,7 @@ const Scenario: FC = () => {
 					<Block $column $gap={12} $height="100%" $padding={20} $borderRadius={12} $bgc={palette.black[500]}>
 						{scenario.content.dialogues.map((line, index) => (
 							<DialogueItem
+								isPrevSame={index !== 0 ? line.character === scenario.content.dialogues[index - 1].character : false}
 								authorId={scenario.authorId}
 								userId={myId || 0}
 								scenarioId={scenario.id}
@@ -150,8 +151,15 @@ const Content = styled(Body.S)`
 `;
 
 const DialogueItem: FC<
-	DialogueLine & { authorId: number; scenarioId: number; dialogueId: number; userId: number; scenario: ScenarioAttributes | null }
-> = ({ authorId, scenarioId, dialogueId, content, character, timestamp, userId, scenario }) => {
+	DialogueLine & {
+		authorId: number;
+		scenarioId: number;
+		dialogueId: number;
+		userId: number;
+		scenario: ScenarioAttributes | null;
+		isPrevSame: boolean;
+	}
+> = ({ authorId, scenarioId, dialogueId, content, character, timestamp, userId, scenario, isPrevSame }) => {
 	const parseContent = content
 		.map((contentItem) => {
 			if (typeof contentItem === "string") return contentItem;
@@ -165,28 +173,36 @@ const DialogueItem: FC<
 
 	return (
 		<Block $maxWidth="576px" $column $gap={8}>
+			{!isPrevSame && (
+				<Flex $alignItems="center" $gap={8}>
+					<img
+						style={{ borderRadius: "8px" }}
+						src={"/characters/" + (character === "Ганс Ланда" ? "landa" : "lapadit") + ".jpg"}
+					/>
+					<Body.XS $color={palette.gray[900]} $isCyrillic={/[а-яА-Я]/g.test(character)}>
+						{character}
+					</Body.XS>
+				</Flex>
+			)}
 			<Flex $gap={8} $alignItems="baseline">
 				<Timestamp $bgc={palette.black[600]} $borderRadius={4} $padding={[4, 8, 0, 8]}>
 					<Code.S $color={palette.primary[500]}>{timestamp}</Code.S>
 				</Timestamp>
-				<Body.XS $color={palette.gray[900]} $isCyrillic={/[а-яА-Я]/g.test(character)}>
-					{character}
-				</Body.XS>
+				<Content $color={palette.white[300]} $isCyrillic={/[а-яА-Я]/g.test(parseContent)}>
+					{content.map((contentItem, index) => (
+						<Item
+							authorId={authorId}
+							userId={userId}
+							lineId={index}
+							dialogueId={dialogueId}
+							scenarioId={scenarioId}
+							key={index}
+							data={contentItem}
+							scenario={scenario}
+						/>
+					))}
+				</Content>
 			</Flex>
-			<Content $color={palette.white[300]} $isCyrillic={/[а-яА-Я]/g.test(parseContent)}>
-				{content.map((contentItem, index) => (
-					<Item
-						authorId={authorId}
-						userId={userId}
-						lineId={index}
-						dialogueId={dialogueId}
-						scenarioId={scenarioId}
-						key={index}
-						data={contentItem}
-						scenario={scenario}
-					/>
-				))}
-			</Content>
 		</Block>
 	);
 };
