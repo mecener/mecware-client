@@ -1,4 +1,3 @@
-import { Navigate } from "react-router-dom";
 import SignIn from "./pages/Auth/SignIn";
 import SignUp from "./pages/Auth/SignUp";
 import ProjectManager from "./pages/ProjectManager/ProjectManager";
@@ -35,12 +34,12 @@ export interface AppRoute {
 }
 
 export const AppRoutes: Record<string, AppRoute> = {
-	INDEX: {
+	/* INDEX: {
 		path: "/",
 		name: "Redirection",
 		element: <Navigate to="/scenario" replace />,
 		isIndex: true,
-	},
+	}, */
 	SIGN_IN: {
 		path: "/signin",
 		name: "Signin",

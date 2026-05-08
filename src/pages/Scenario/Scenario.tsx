@@ -18,6 +18,7 @@ import { useAddContributionMutation, useChangeSelectedContributionMutation } fro
 import { useActions } from "@/hooks/useActions";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { io, Socket } from "socket.io-client";
 
 const BackLink = styled(Flex)`
 	cursor: pointer;
@@ -59,6 +60,43 @@ const Scenario: FC = () => {
 	const { id: myId } = useAppSelector((state) => state.auth);
 
 	const [scenario, setScenario] = useState<ScenarioAttributes | null>(null);
+
+	const socketRef = useRef<Socket | null>(null);
+
+	useEffect(() => {
+		socketRef.current = io("http://localhost:9932", {
+			withCredentials: true,
+		});
+
+		socketRef.current.on("connect", () => {
+			console.log("Connected to socket server");
+
+			if (id) {
+				socketRef.current?.emit("join-scenario", +id);
+			}
+		});
+
+		socketRef.current.on("disconnect", () => {
+			console.log("Disconnected from socket server");
+		});
+
+		socketRef.current.on("contribution-added", (data) => {
+			setScenario(data[0]);
+		});
+
+		socketRef.current.on("contribution-changed", (data) => {
+			setScenario(data[0]);
+		});
+
+		return () => {
+			if (socketRef.current) {
+				if (id) {
+					socketRef.current.emit("leave-scenario", +id);
+				}
+				socketRef.current.disconnect();
+			}
+		};
+	}, [id]);
 
 	useEffect(() => {
 		if (id && (scenarios.my.length > 0 || scenarios.shared.length > 0)) {
@@ -112,7 +150,11 @@ const Scenario: FC = () => {
 					)}
 					<Flex $alignItems="flex-end" $column $gap={4}>
 						<Overline.S $color={palette.gray[900]}>Contributors</Overline.S>
-						<UserCard {...users.filter((user) => scenario.contributorIds?.includes(user.id))[0]} />
+						{users
+							.filter((user) => scenario.contributorIds?.includes(user.id))
+							.map((user, index) => (
+								<UserCard {...user} key={index} />
+							))}
 					</Flex>
 				</Flex>
 			</Block>
@@ -180,7 +222,7 @@ const DialogueItem: FC<
 						src={"/characters/" + (character === "Ганс Ланда" ? "landa" : "lapadit") + ".jpg"}
 					/>
 					<Body.XS $color={palette.gray[900]} $isCyrillic={/[а-яА-Я]/g.test(character)}>
-						{character}
+						{character === "Ганс Ланда" ? "Ганс Килаберия" : "Перье Меценер"}
 					</Body.XS>
 				</Flex>
 			)}
@@ -288,12 +330,11 @@ const Item: FC<{
 
 		console.log({ scenarioId, dialogueId, lineId, userId, contributionContent: value.value });
 
-		await triggerAddContribution({ scenarioId, dialogueId, lineId, userId, contributionContent: value.value })
+		await triggerAddContribution({ scenarioId, dialogueId, lineId, userId, contributionContent: value.value, authorId })
 			.unwrap()
-			.then((response) => {
-				console.log(response);
-				location.reload();
+			.then(() => {
 				localStorage.setItem("scrollPos", `${window.scrollY}`);
+				setIsTooltipVisible(false);
 			});
 	};
 
@@ -318,19 +359,44 @@ const Item: FC<{
 					className={`contribution${data.selectedOption !== "initial" ? " contribution--picked" : ""}`}
 				>
 					{data.selectedOption === "initial" ? data.initial : data.contributions[data.selectedOption].content}
-					<AP mode="wait">
+					<AP>
 						{isTooltipVisible && (
-							<m.div {...transitions}>
-								<Tooltip
-									onClick={(event) => event.stopPropagation()}
-									$maxWidth="400px"
-									$side="right"
-									$contentPlacement="start"
-									$style="default"
-								>
-									<Flex $column $gap={12}>
+							<Tooltip
+								onClick={(event) => event.stopPropagation()}
+								$maxWidth="400px"
+								$side="right"
+								$contentPlacement="start"
+								$style="default"
+							>
+								<Flex $column $gap={12}>
+									<PickItem
+										$column
+										$clickable={authorId === myId}
+										onClick={async () => {
+											if (authorId === myId) {
+												await triggerChangeSelectedContribution({
+													scenarioId,
+													dialogueId,
+													lineId,
+													userId,
+													contributionId: "initial",
+													authorId,
+												})
+													.unwrap()
+													.then((response) => {
+														setMyScenarios(response.data);
+													});
+											}
+										}}
+									>
+										<Label.S $color={palette.gray[800]}>Original</Label.S>
+										<Body.XS $isCyrillic={/[а-яА-Я]/g.test(data.initial)}>{data.initial}</Body.XS>
+										<IconContainer $isVisible={data.selectedOption === "initial"}>
+											<Icon.Check />
+										</IconContainer>
+									</PickItem>
+									{data.contributions.map((contribution, index) => (
 										<PickItem
-											$column
 											$clickable={authorId === myId}
 											onClick={async () => {
 												if (authorId === myId) {
@@ -339,7 +405,8 @@ const Item: FC<{
 														dialogueId,
 														lineId,
 														userId,
-														contributionId: "initial",
+														contributionId: index,
+														authorId,
 													})
 														.unwrap()
 														.then((response) => {
@@ -347,56 +414,30 @@ const Item: FC<{
 														});
 												}
 											}}
+											key={index}
+											$column
 										>
-											<Label.S $color={palette.gray[800]}>Original</Label.S>
-											<Body.XS $isCyrillic={/[а-яА-Я]/g.test(data.initial)}>{data.initial}</Body.XS>
-											<IconContainer $isVisible={data.selectedOption === "initial"}>
+											<Label.S $color={palette.gray[800]}>{contribution.username}'s contribution</Label.S>
+											<Body.XS $isCyrillic={/[а-яА-Я]/g.test(contribution.content)}>{contribution.content}</Body.XS>
+											<IconContainer $isVisible={data.selectedOption === index}>
 												<Icon.Check />
 											</IconContainer>
 										</PickItem>
-										{data.contributions.map((contribution, index) => (
-											<PickItem
-												$clickable={authorId === myId}
-												onClick={async () => {
-													if (authorId === myId) {
-														await triggerChangeSelectedContribution({
-															scenarioId,
-															dialogueId,
-															lineId,
-															userId,
-															contributionId: index,
-														})
-															.unwrap()
-															.then((response) => {
-																setMyScenarios(response.data);
-															});
-													}
-												}}
-												key={index}
-												$column
-											>
-												<Label.S $color={palette.gray[800]}>{contribution.username}'s contribution</Label.S>
-												<Body.XS $isCyrillic={/[а-яА-Я]/g.test(contribution.content)}>{contribution.content}</Body.XS>
-												<IconContainer $isVisible={data.selectedOption === index}>
-													<Icon.Check />
-												</IconContainer>
-											</PickItem>
-										))}
-										{!hasContribution(scenario) && (
-											<SForm onSubmit={(event) => handler(event)} $gap={8} $alignItems="flex-end">
-												<Input
-													onClick={(event) => event.stopPropagation()}
-													min
-													placeholder="Add contribution"
-													value={value.value}
-													onChange={value.onChange}
-												/>
-												<Button.Primary onClick={(event) => event.stopPropagation()} $icon={<Icon.Scenario />} />
-											</SForm>
-										)}
-									</Flex>
-								</Tooltip>
-							</m.div>
+									))}
+									{!hasContribution(scenario) && (
+										<SForm onSubmit={(event) => handler(event)} $gap={8} $alignItems="flex-end">
+											<Input
+												onClick={(event) => event.stopPropagation()}
+												min
+												placeholder="Add contribution"
+												value={value.value}
+												onChange={value.onChange}
+											/>
+											<Button.Primary onClick={(event) => event.stopPropagation()} $icon={<Icon.Scenario />} />
+										</SForm>
+									)}
+								</Flex>
+							</Tooltip>
 						)}
 					</AP>
 				</span>

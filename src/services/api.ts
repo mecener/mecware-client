@@ -7,7 +7,7 @@ import { type User as IUser } from "@/store/slices/users";
 export const api = createApi({
 	reducerPath: "api",
 	baseQuery: fetchBaseQuery({
-		baseUrl: "https://api.mecener.online/",
+		baseUrl: "http://localhost:9932/",
 		credentials: "include",
 		prepareHeaders(headers) {
 			headers.set("Content-Type", "application/json");
@@ -73,7 +73,7 @@ export const api = createApi({
 		}),
 		addContribution: builder.mutation<
 			ScenarioResponseS,
-			{ scenarioId: number; dialogueId: number; lineId: number; userId: number; contributionContent: string }
+			{ scenarioId: number; dialogueId: number; lineId: number; userId: number; contributionContent: string; authorId: number }
 		>({
 			query: (data) => ({
 				method: "POST",
@@ -83,7 +83,14 @@ export const api = createApi({
 		}),
 		changeSelectedContribution: builder.mutation<
 			ScenarioResponseS,
-			{ scenarioId: number; dialogueId: number; lineId: number; userId: number; contributionId: number | "initial" }
+			{
+				scenarioId: number;
+				dialogueId: number;
+				lineId: number;
+				userId: number;
+				contributionId: number | "initial";
+				authorId: number;
+			}
 		>({
 			query: (data) => ({
 				method: "POST",

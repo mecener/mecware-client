@@ -4,6 +4,7 @@ import Modals from "./components/Modal/Modals";
 import { useGetMeQuery, useLazyGetAllUsersQuery, useLazyGetScenarioQuery } from "./services/api";
 import { useActions } from "./hooks/useActions";
 import { useAppSelector } from "./hooks/useAppSelector";
+import { useNavigate } from "react-router-dom";
 
 /*
 	<Continue.Here4/>
@@ -41,6 +42,8 @@ const App: FC = () => {
 		}
 	};
 
+	const navigate = useNavigate();
+
 	useEffect(() => {
 		if (data) {
 			logIn({ token: data.accessToken, id: data.user.id });
@@ -55,6 +58,7 @@ const App: FC = () => {
 
 		if (isError) {
 			logOut();
+			navigate("/signin");
 		}
 	}, [data, isError, isLoading]);
 
