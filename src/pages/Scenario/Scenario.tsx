@@ -64,7 +64,7 @@ const Scenario: FC = () => {
 	const socketRef = useRef<Socket | null>(null);
 
 	useEffect(() => {
-		socketRef.current = io("http://localhost:9932", {
+		socketRef.current = io("https://api.mecener.online/", {
 			withCredentials: true,
 		});
 
