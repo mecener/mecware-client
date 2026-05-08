@@ -13,7 +13,7 @@ import { palette } from "@/style/colorPalette";
 import { useEffect, useRef, useState, type FC } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled, { css } from "styled-components";
-import { AnimatePresence as AP, motion as m } from "framer-motion";
+import { AnimatePresence as AP } from "framer-motion";
 import { useAddContributionMutation, useChangeSelectedContributionMutation } from "@/services/api";
 import { useActions } from "@/hooks/useActions";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
@@ -336,12 +336,6 @@ const Item: FC<{
 				localStorage.setItem("scrollPos", `${window.scrollY}`);
 				setIsTooltipVisible(false);
 			});
-	};
-
-	const transitions = {
-		initial: { opacity: 0, scale: 0.95 },
-		animate: { opacity: 1, scale: 1 },
-		exit: { opacity: 0, scale: 0.95 },
 	};
 
 	const tooltipRef = useRef<HTMLDivElement>(null);
